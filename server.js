@@ -6,10 +6,9 @@ const nodemailer = require('nodemailer');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({ origin: "*" })); // Allow all origins
 app.use(express.json());
 
-// Email Transporter Setup (Replace with your credentials)
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -18,9 +17,12 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-// API Endpoint to Handle Contact Form
 app.post('/contact', (req, res) => {
     const { name, email, subject, message } = req.body;
+
+    if (!name || !email || !subject || !message) {
+        return res.status(400).json({ error: "All fields are required" });
+    }
 
     const mailOptions = {
         from: email,
@@ -31,9 +33,11 @@ app.post('/contact', (req, res) => {
 
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-            return res.status(500).json({ error: 'Error sending email' });
+            console.error("Email Error:", error);
+            return res.status(500).json({ error: "Error sending email" });
         }
-        res.status(200).json({ message: 'Email sent successfully!' });
+        console.log("Email Sent:", info.response);
+        return res.status(200).json({ message: "Email sent successfully!" });
     });
 });
 
